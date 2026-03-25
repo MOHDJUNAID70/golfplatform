@@ -17,14 +17,14 @@ export default function MyWins() {
   }, [])
 
   const fetchWins = async (user_id) => {
-    const res = await fetch(`/api/winners/my-wins?user_id=${user_id}`)
+    const res = await fetch(`/api/winner/my-wins?user_id=${user_id}`)
     const data = await res.json()
     setWinners(data.winners || [])
   }
 
   const handleProofSubmit = async (winner_id) => {
     if (!proofUrl[winner_id]) return setMessage('Please enter a proof URL')
-    const res = await fetch('/api/winners/upload-proof', {
+    const res = await fetch('/api/admin/upload-proof', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ winner_id, proof_url: proofUrl[winner_id] })
