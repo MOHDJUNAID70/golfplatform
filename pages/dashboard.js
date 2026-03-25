@@ -156,6 +156,10 @@ export default function Dashboard() {
 
         {/* Quick Links */}
         <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+          <button onClick={() => router.push('/my-wins')}
+            style={{ flex: 1, padding: '12px', background: 'white', border: '1px solid #eee', borderRadius: 10, fontWeight: 500, fontSize: 14 }}>
+            My Winnings →
+          </button>
           <button onClick={() => router.push('/draws')}
             style={{ flex: 1, padding: '12px', background: 'white', border: '1px solid #eee', borderRadius: 10, fontWeight: 500, fontSize: 14 }}>
             View Monthly Draws →

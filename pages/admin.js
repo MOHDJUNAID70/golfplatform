@@ -10,6 +10,7 @@ export default function Admin() {
   const [newCharity, setNewCharity] = useState({ name: '', description: '' })
   const [tab, setTab] = useState('users')
   const [message, setMessage] = useState('')
+  const [winners, setWinners] = useState([])
 
   useEffect(() => {
     const stored = localStorage.getItem('user')
@@ -25,11 +26,13 @@ export default function Admin() {
       fetch('/api/admin/scores').then(r => r.json()),
       fetch('/api/charities/get').then(r => r.json()),
       fetch('/api/draws/get').then(r => r.json()),
+      fetch('/api/admin/winners').then(r => r.json()),
     ])
     setUsers(u.users || [])
     setScores(s.scores || [])
     setCharities(c.charities || [])
     setDraws(d.draws || [])
+    setWinners(w.winners || [])
   }
 
   const handleDeleteUser = async (user_id) => {
@@ -92,6 +95,7 @@ export default function Admin() {
     { key: 'scores', label: `Scores (${scores.length})` },
     { key: 'charities', label: `Charities (${charities.length})` },
     { key: 'draws', label: `Draws (${draws.length})` },
+    { key: 'winners', label: `Winners (${winners.length})` },
   ]
 
   return (
@@ -300,6 +304,74 @@ export default function Admin() {
             </div>
           </div>
         )}
+
+        {/* Winners Tab */}
+{tab === 'winners' && (
+  <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
+    {winners.length === 0 && (
+      <p style={{ padding: 20, color: 'gray', fontSize: 14 }}>No winners yet</p>
+    )}
+    {winners.map((w, i) => (
+      <div key={w.id} style={{
+        padding: '16px 20px',
+        borderBottom: i < winners.length - 1 ? '1px solid #f5f5f5' : 'none'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontWeight: 500, marginBottom: 2 }}>{w.users?.name}</p>
+            <p style={{ fontSize: 13, color: 'gray', marginBottom: 4 }}>{w.users?.email}</p>
+            <p style={{ fontSize: 13, color: 'gray' }}>
+              {w.match_type} · Draw: {w.draws?.draw_date} · Prize: <strong>£{w.prize_amount}</strong>
+            </p>
+            {w.proof_url && (
+              <a href={w.proof_url} target="_blank"
+                style={{ fontSize: 12, color: '#0070f3', marginTop: 4, display: 'inline-block' }}>
+                View Proof →
+              </a>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+            <span style={{
+              fontSize: 12, fontWeight: 500, padding: '3px 10px', borderRadius: 20,
+              background: w.payment_status === 'paid' ? '#f0fdf4' : w.payment_status === 'rejected' ? '#fef2f2' : '#fffbeb',
+              color: w.payment_status === 'paid' ? '#16a34a' : w.payment_status === 'rejected' ? '#dc2626' : '#d97706'
+            }}>
+              {w.payment_status}
+            </span>
+            {w.payment_status === 'pending' && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={async () => {
+                  await fetch('/api/admin/verify-winner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ winner_id: w.id, action: 'approve' })
+                  })
+                  setMessage('Winner approved!')
+                  setTimeout(() => setMessage(''), 2000)
+                  fetchAll()
+                }} style={{ background: '#16a34a', color: 'white', border: 'none', padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500 }}>
+                  Approve
+                </button>
+                <button onClick={async () => {
+                  await fetch('/api/admin/verify-winner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ winner_id: w.id, action: 'reject' })
+                  })
+                  setMessage('Winner rejected.')
+                  setTimeout(() => setMessage(''), 2000)
+                  fetchAll()
+                }} style={{ background: 'none', color: '#dc2626', border: '1px solid #fecaca', padding: '5px 14px', borderRadius: 6, fontSize: 12 }}>
+                  Reject
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
       </div>
     </div>
   )
