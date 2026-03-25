@@ -6,6 +6,7 @@ export default function Admin() {
   const [users, setUsers] = useState([])
   const [scores, setScores] = useState([])
   const [charities, setCharities] = useState([])
+  const [draws, setDraws] = useState([])
   const [newCharity, setNewCharity] = useState({ name: '', description: '' })
   const [tab, setTab] = useState('users')
   const [message, setMessage] = useState('')
@@ -19,14 +20,16 @@ export default function Admin() {
   }, [])
 
   const fetchAll = async () => {
-    const [u, s, c] = await Promise.all([
+    const [u, s, c, d] = await Promise.all([
       fetch('/api/admin/users').then(r => r.json()),
       fetch('/api/admin/scores').then(r => r.json()),
       fetch('/api/charities/get').then(r => r.json()),
+      fetch('/api/draws/get').then(r => r.json()),
     ])
     setUsers(u.users || [])
     setScores(s.scores || [])
     setCharities(c.charities || [])
+    setDraws(d.draws || [])
   }
 
   const handleDeleteUser = async (user_id) => {
@@ -41,15 +44,14 @@ export default function Admin() {
 
   const handleAddCharity = async () => {
     if (!newCharity.name) return setMessage('Name required')
-    const res = await fetch('/api/admin/add-charity', {
+    await fetch('/api/admin/add-charity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newCharity)
     })
-    const data = await res.json()
-    if (data.error) return setMessage(data.error)
     setMessage('Charity added!')
     setNewCharity({ name: '', description: '' })
+    setTimeout(() => setMessage(''), 2000)
     fetchAll()
   }
 
@@ -63,179 +65,242 @@ export default function Admin() {
     fetchAll()
   }
 
-  const tabStyle = (t) => ({
-    padding: '8px 20px', cursor: 'pointer', borderBottom: tab === t ? '2px solid #0070f3' : '2px solid transparent',
-    color: tab === t ? '#0070f3' : 'gray', background: 'none', border: 'none', fontSize: 15
-  })
-
-  return (
-    <div style={{ maxWidth: 900, margin: '40px auto', padding: 24 }}>
-      <h2>Admin Panel</h2>
-
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #eee', marginBottom: 24 }}>
-        <button style={tabStyle('users')} onClick={() => setTab('users')}>Users ({users.length})</button>
-        <button style={tabStyle('scores')} onClick={() => setTab('scores')}>Scores ({scores.length})</button>
-        <button style={tabStyle('charities')} onClick={() => setTab('charities')}>Charities ({charities.length})</button>
-        <button style={tabStyle('draws')} onClick={() => setTab('draws')}>Draws</button>
-      </div>
-
-      {message && <p style={{ color: 'green', marginBottom: 16 }}>{message}</p>}
-
-      {/* Users Tab */}
-      {tab === 'users' && (
-        <div>
-          <h3>All Users</h3>
-          {users.map(u => (
-            <div key={u.id} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '12px 16px', margin: '8px 0', border: '1px solid #eee', borderRadius: 8
-            }}>
-              <div>
-                <strong>{u.name}</strong>
-                <p style={{ color: 'gray', margin: 0, fontSize: 13 }}>{u.email}</p>
-              </div>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                <span style={{
-                  padding: '3px 10px', borderRadius: 20, fontSize: 12,
-                  background: u.subscription_status === 'active' ? '#e6f4ea' : '#fce8e6',
-                  color: u.subscription_status === 'active' ? 'green' : 'red'
-                }}>
-                  {u.subscription_status || 'inactive'}
-                </span>
-                <span style={{ fontSize: 12, color: 'gray' }}>{u.role}</span>
-                <button onClick={() => handleDeleteUser(u.id)}
-                  style={{ color: 'red', background: 'none', border: '1px solid red', padding: '4px 10px', borderRadius: 6, cursor: 'pointer' }}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Scores Tab */}
-      {tab === 'scores' && (
-        <div>
-          <h3>All Scores</h3>
-          {scores.map(s => (
-            <div key={s.id} style={{
-              display: 'flex', justifyContent: 'space-between',
-              padding: '10px 16px', margin: '6px 0', border: '1px solid #eee', borderRadius: 8
-            }}>
-              <span><strong>{s.users?.name}</strong> — {s.users?.email}</span>
-              <span>Score: <strong>{s.score}</strong> | {s.date}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Charities Tab */}
-      {tab === 'charities' && (
-        <div>
-          <h3>Add Charity</h3>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            <input placeholder="Charity name" value={newCharity.name}
-              onChange={e => setNewCharity({ ...newCharity, name: e.target.value })} />
-            <input placeholder="Description" value={newCharity.description}
-              onChange={e => setNewCharity({ ...newCharity, description: e.target.value })} />
-            <button onClick={handleAddCharity}>Add</button>
-          </div>
-
-          <h3>All Charities</h3>
-          {charities.map(c => (
-            <div key={c.id} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '10px 16px', margin: '6px 0', border: '1px solid #eee', borderRadius: 8
-            }}>
-              <div>
-                <strong>{c.name}</strong>
-                <p style={{ margin: 0, color: 'gray', fontSize: 13 }}>{c.description}</p>
-              </div>
-              <button onClick={() => handleDeleteCharity(c.id)}
-                style={{ color: 'red', background: 'none', border: '1px solid red', padding: '4px 10px', borderRadius: 6, cursor: 'pointer' }}>
-                Delete
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Draws Tab */}
-{tab === 'draws' && (
-  <div>
-    <h3>Draw Management</h3>
-    <button
-      onClick={async () => {
-        const res = await fetch('/api/draws/create', { method: 'POST' })
-        const data = await res.json()
-        if (data.draw) {
-          setMessage(`Draw created! Numbers: ${data.draw.winning_numbers.join(', ')}`)
-          fetchAll()
-        }
-      }}
-      style={{ padding: '10px 20px', background: '#0070f3', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', marginBottom: 16 }}>
-      Generate New Draw
-    </button>
-
-    <DrawsList />
-  </div>
-)}
-    </div>
-  )
-  function DrawsList() {
-  const [draws, setDraws] = useState([])
-  const [message, setMessage] = useState('')
-
-  useEffect(() => { fetchDraws() }, [])
-
-  const fetchDraws = async () => {
-    const res = await fetch('/api/draws/get')
+  const handleCreateDraw = async () => {
+    const res = await fetch('/api/draws/create', { method: 'POST' })
     const data = await res.json()
-    setDraws(data.draws || [])
+    if (data.draw) {
+      setMessage(`Draw created! Numbers: ${data.draw.winning_numbers.join(', ')}`)
+      setTimeout(() => setMessage(''), 3000)
+      fetchAll()
+    }
   }
 
-  const runDraw = async (draw_id) => {
+  const handleRunDraw = async (draw_id) => {
     const res = await fetch('/api/draws/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ draw_id })
     })
     const data = await res.json()
-    setMessage(`Winners found: ${data.winners?.length || 0}`)
-    fetchDraws()
+    setMessage(`Draw completed! Winners: ${data.winners?.length || 0}`)
+    setTimeout(() => setMessage(''), 3000)
+    fetchAll()
   }
 
+  const tabs = [
+    { key: 'users', label: `Users (${users.length})` },
+    { key: 'scores', label: `Scores (${scores.length})` },
+    { key: 'charities', label: `Charities (${charities.length})` },
+    { key: 'draws', label: `Draws (${draws.length})` },
+  ]
+
   return (
-    <div>
-      {message && <p style={{ color: 'green' }}>{message}</p>}
-      {draws.map(d => (
-        <div key={d.id} style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '12px 16px', margin: '8px 0', border: '1px solid #eee', borderRadius: 8
-        }}>
-          <div>
-            <strong>{d.draw_date}</strong>
-            <p style={{ margin: 0, fontSize: 13, color: 'gray' }}>
-              Numbers: {d.winning_numbers?.join(', ')}
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{
-              padding: '3px 10px', borderRadius: 20, fontSize: 12,
-              background: d.status === 'published' ? '#e6f4ea' : '#fff3e0',
-              color: d.status === 'published' ? 'green' : 'orange'
-            }}>{d.status}</span>
-            {d.status === 'pending' && (
-              <button onClick={() => runDraw(d.id)}
-                style={{ background: 'green', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 6, cursor: 'pointer' }}>
-                Run Draw
-              </button>
-            )}
-          </div>
+    <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+
+      {/* Navbar */}
+      <nav style={{ background: 'white', borderBottom: '1px solid #eee', padding: '14px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontWeight: 700, fontSize: 20, color: '#0070f3', cursor: 'pointer' }} onClick={() => router.push('/')}>GolfGives</span>
+        <button onClick={() => router.push('/dashboard')}
+          style={{ padding: '6px 16px', background: 'none', border: '1px solid #eee', borderRadius: 8, fontSize: 13, color: 'gray' }}>
+          ← Dashboard
+        </button>
+      </nav>
+
+      <div style={{ maxWidth: 960, margin: '32px auto', padding: '0 24px' }}>
+
+        <h2 style={{ marginBottom: 24 }}>Admin Panel</h2>
+
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+          {[
+            { label: 'Total Users', value: users.length },
+            { label: 'Active Subscribers', value: users.filter(u => u.subscription_status === 'active').length },
+            { label: 'Total Scores', value: scores.length },
+            { label: 'Total Draws', value: draws.length },
+          ].map(stat => (
+            <div key={stat.label} style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, padding: '16px 20px' }}>
+              <p style={{ fontSize: 12, color: 'gray', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</p>
+              <p style={{ fontSize: 28, fontWeight: 700, color: '#0070f3' }}>{stat.value}</p>
+            </div>
+          ))}
         </div>
-      ))}
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 4, background: 'white', border: '1px solid #eee', borderRadius: 10, padding: 4, marginBottom: 24, width: 'fit-content' }}>
+          {tabs.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              style={{
+                padding: '8px 18px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 500,
+                background: tab === t.key ? '#0070f3' : 'transparent',
+                color: tab === t.key ? 'white' : 'gray',
+                transition: 'all 0.2s'
+              }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {message && (
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 16px', marginBottom: 16, color: '#16a34a', fontSize: 14 }}>
+            {message}
+          </div>
+        )}
+
+        {/* Users Tab */}
+        {tab === 'users' && (
+          <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
+            {users.map((u, i) => (
+              <div key={u.id} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '14px 20px',
+                borderBottom: i < users.length - 1 ? '1px solid #f5f5f5' : 'none'
+              }}>
+                <div>
+                  <p style={{ fontWeight: 500, marginBottom: 2 }}>{u.name}</p>
+                  <p style={{ fontSize: 13, color: 'gray' }}>{u.email}</p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{
+                    padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500,
+                    background: u.subscription_status === 'active' ? '#f0fdf4' : '#fef2f2',
+                    color: u.subscription_status === 'active' ? '#16a34a' : '#dc2626'
+                  }}>
+                    {u.subscription_status || 'inactive'}
+                  </span>
+                  <span style={{ fontSize: 12, color: 'gray', background: '#f5f5f5', padding: '3px 10px', borderRadius: 20 }}>{u.role}</span>
+                  <button onClick={() => handleDeleteUser(u.id)}
+                    style={{ color: '#dc2626', background: 'none', border: '1px solid #fecaca', padding: '4px 12px', borderRadius: 6, fontSize: 12 }}>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Scores Tab */}
+        {tab === 'scores' && (
+          <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
+            {scores.map((s, i) => (
+              <div key={s.id} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '14px 20px',
+                borderBottom: i < scores.length - 1 ? '1px solid #f5f5f5' : 'none'
+              }}>
+                <div>
+                  <p style={{ fontWeight: 500, marginBottom: 2 }}>{s.users?.name}</p>
+                  <p style={{ fontSize: 13, color: 'gray' }}>{s.users?.email}</p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, background: '#f0f7ff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#0070f3' }}>
+                    {s.score}
+                  </div>
+                  <span style={{ fontSize: 13, color: 'gray' }}>{s.date}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Charities Tab */}
+        {tab === 'charities' && (
+          <div>
+            <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+              <h3 style={{ marginBottom: 16, fontSize: 15 }}>Add New Charity</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, display: 'block' }}>Name</label>
+                  <input placeholder="Charity name" value={newCharity.name}
+                    onChange={e => setNewCharity({ ...newCharity, name: e.target.value })}
+                    style={{ marginBottom: 0 }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 4, display: 'block' }}>Description</label>
+                  <input placeholder="Short description" value={newCharity.description}
+                    onChange={e => setNewCharity({ ...newCharity, description: e.target.value })}
+                    style={{ marginBottom: 0 }} />
+                </div>
+                <button onClick={handleAddCharity}
+                  style={{ padding: '10px 20px', background: '#0070f3', color: 'white', border: 'none', borderRadius: 8, fontWeight: 500, height: 42 }}>
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
+              {charities.map((c, i) => (
+                <div key={c.id} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '14px 20px',
+                  borderBottom: i < charities.length - 1 ? '1px solid #f5f5f5' : 'none'
+                }}>
+                  <div>
+                    <p style={{ fontWeight: 500, marginBottom: 2 }}>{c.name}</p>
+                    <p style={{ fontSize: 13, color: 'gray' }}>{c.description}</p>
+                  </div>
+                  <button onClick={() => handleDeleteCharity(c.id)}
+                    style={{ color: '#dc2626', background: 'none', border: '1px solid #fecaca', padding: '4px 12px', borderRadius: 6, fontSize: 12 }}>
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Draws Tab */}
+        {tab === 'draws' && (
+          <div>
+            <button onClick={handleCreateDraw}
+              style={{ padding: '10px 24px', background: '#0070f3', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, marginBottom: 16 }}>
+              + Generate New Draw
+            </button>
+
+            <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
+              {draws.length === 0 && (
+                <p style={{ padding: 20, color: 'gray', fontSize: 14 }}>No draws yet</p>
+              )}
+              {draws.map((d, i) => (
+                <div key={d.id} style={{
+                  padding: '16px 20px',
+                  borderBottom: i < draws.length - 1 ? '1px solid #f5f5f5' : 'none'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <p style={{ fontWeight: 500 }}>Draw — {d.draw_date}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{
+                        padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500,
+                        background: d.status === 'published' ? '#f0fdf4' : '#fffbeb',
+                        color: d.status === 'published' ? '#16a34a' : '#d97706'
+                      }}>
+                        {d.status}
+                      </span>
+                      {d.status === 'pending' && (
+                        <button onClick={() => handleRunDraw(d.id)}
+                          style={{ background: '#16a34a', color: 'white', border: 'none', padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500 }}>
+                          Run Draw
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {d.winning_numbers?.map((n, idx) => (
+                      <div key={idx} style={{
+                        width: 36, height: 36, borderRadius: '50%',
+                        background: '#0070f3', color: 'white',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 700, fontSize: 14
+                      }}>
+                        {n}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
-}
 }
