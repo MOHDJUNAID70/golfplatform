@@ -21,18 +21,27 @@ export default function Admin() {
   }, [])
 
   const fetchAll = async () => {
-    const [u, s, c, d] = await Promise.all([
-      fetch('/api/admin/users').then(r => r.json()),
-      fetch('/api/admin/scores').then(r => r.json()),
-      fetch('/api/charities/get').then(r => r.json()),
-      fetch('/api/draws/get').then(r => r.json()),
-      fetch('/api/admin/winners').then(r => r.json()),
-    ])
-    setUsers(u.users || [])
-    setScores(s.scores || [])
-    setCharities(c.charities || [])
-    setDraws(d.draws || [])
-    setWinners(w.winners || [])
+    try {
+      const [u, s, c, d, w] = await Promise.allSettled([
+        fetch('/api/admin/users').then(r => r.json()),
+        fetch('/api/admin/scores').then(r => r.json()),
+        fetch('/api/charities/get').then(r => r.json()),
+        fetch('/api/draws/get').then(r => r.json()),
+        fetch('/api/admin/winner').then(r => r.json()),
+      ])
+      setUsers(u.status === 'fulfilled' ? (u.value.users || []) : [])
+      setScores(s.status === 'fulfilled' ? (s.value.scores || []) : [])
+      setCharities(c.status === 'fulfilled' ? (c.value.charities || []) : [])
+      setDraws(d.status === 'fulfilled' ? (d.value.draws || []) : [])
+      setWinners(w.status === 'fulfilled' ? (w.value.winners || []) : [])
+
+      if ([u, s, c, d, w].some(result => result.status === 'rejected')) {
+        setMessage('Some admin data could not be loaded')
+      }
+    } catch (error) {
+      console.error('Failed to load admin data:', error)
+      setMessage('Failed to load admin data')
+    }
   }
 
   const handleDeleteUser = async (user_id) => {
