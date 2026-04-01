@@ -1,36 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Golf Charity Subscription Platform
 
-## Getting Started
+A subscription-based web platform combining golf performance tracking, 
+charity fundraising, and a monthly draw-based reward engine.
 
-First, run the development server:
+## Features
+- JWT-based authentication (signup, login, protected routes)
+- Monthly & yearly subscription plans
+- Rolling 5-score entry system (Stableford format, 1–45)
+- Monthly draw engine with 3-tier prize pool (5/4/3 match)
+- Charity selection with automatic contribution logic
+- Winner verification flow with proof submission
+- Full Admin Panel — users, scores, draws, charities, winners
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tech Stack
+- **Frontend:** Next.js, React.js, Tailwind CSS
+- **Backend:** Node.js, Next.js API Routes
+- **Database:** PostgreSQL (Supabase)
+- **Auth:** JWT
+- **Deployment:** Vercel (frontend + backend), Supabase (database)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Live Demo
+[View Live] -> https://golfplatform-seven.vercel.app
